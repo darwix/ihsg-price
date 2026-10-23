@@ -2,6 +2,7 @@ import json
 
 import pandas as pd
 
+import ihsg_price.coverage as coverage
 from ihsg_price.coverage import render_coverage, update_readme
 from ihsg_price.metadata import record_scraped_dates
 
@@ -37,3 +38,15 @@ def test_update_readme_replaces_only_coverage_block(tmp_path):
     update_readme(readme, "new")
 
     assert readme.read_text() == "before\n<!-- data-coverage:start -->\nnew\n<!-- data-coverage:end -->\nafter\n"
+
+
+def test_main_uses_repository_working_directory(tmp_path, monkeypatch):
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "metadata.json").write_text(json.dumps({"BBCA.JK": ["2026-10-21"]}))
+    readme = tmp_path / "README.md"
+    readme.write_text("<!-- data-coverage:start -->\nold\n<!-- data-coverage:end -->\n")
+    monkeypatch.setattr(coverage, "ROOT", tmp_path)
+
+    coverage.main()
+
+    assert "| BBCA.JK | 2026-10-21 | 2026-10-21 | 1 |" in readme.read_text()

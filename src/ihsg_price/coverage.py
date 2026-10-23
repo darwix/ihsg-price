@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path.cwd()
 START = "<!-- data-coverage:start -->"
 END = "<!-- data-coverage:end -->"
 
