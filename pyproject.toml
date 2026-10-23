@@ -1,0 +1,12 @@
+[project]
+name = "ihsg-price"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["pandas>=2.2", "pyyaml>=6", "yfinance>=0.2.54"]
+
+[project.scripts]
+ihsg-price = "ihsg_price.cli:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
