@@ -1,6 +1,6 @@
 # ihsg-price
 
-Fetch recent 1-minute OHLCV bars for symbols in `config.yaml` and upsert them into readable, date-partitioned CSV files in `data/minute-bars/`.
+Fetch recent 1-minute OHLCV bars for symbols in `config.yaml` and upsert them into readable, date-partitioned CSV files under `data/minutes/{symbol}/`.
 
 ## Run locally
 
@@ -11,16 +11,14 @@ pip install .
 ihsg-price
 ```
 
-Use `ihsg-price --config config.yaml --output data/minute-bars` to set paths. The scheduled GitHub Actions workflow runs on weekdays after the IDX session and commits only changed daily CSV files. Reruns replace matching `(symbol, timestamp)` rows.
+Use `ihsg-price --config config.yaml --output data/minutes --metadata data/metadata.json` to set paths. The scraper records dates with returned bars per ticker in `data/metadata.json`. GitHub Actions refreshes the coverage table below after each successful run and commits it with changed CSV files. Reruns replace matching `(symbol, timestamp)` rows.
 
 Yahoo Finance limits 1-minute history to a short recent window. The scraper refetches seven days on every run and upserts by symbol and timestamp to repair recent missed runs. Yahoo's unofficial endpoint can change or throttle requests; this workflow is not a guaranteed data feed.
 
 ## Data coverage
 
-The repository does not contain daily CSVs yet, so no collected date range is available. After the first successful run, inspect each symbol's earliest and latest stored minute with:
+<!-- data-coverage:start -->
+No collected minute data yet.
+<!-- data-coverage:end -->
 
-```sh
-python -c "import glob,pandas as pd; d=pd.concat(pd.read_csv(p) for p in glob.glob('data/minute-bars/*.csv')); print(d.groupby('symbol')['timestamp'].agg(['min','max','count']))"
-```
-
-Files use the IDX trading date in Jakarta time, for example `data/minute-bars/2026-10-23.csv`. Timestamps inside each CSV are UTC. The seven-day fetch window is a recovery window, not a guarantee that Yahoo supplies every trading minute or seven full calendar days. The scraper fails if any configured symbol returns no bars, preventing a partial fetch from appearing successful.
+Dates in metadata are Jakarta dates on which Yahoo returned bars. They record days with data, not proof that every trading minute was returned. Each symbol has its own directory, with one file per IDX trading date, for example `data/minutes/BBCA.JK/2026-10-23.csv`; timestamps inside each CSV are UTC. The seven-day fetch window is a recovery window, not a guarantee that Yahoo supplies every trading minute or seven full calendar days. The scraper fails if any configured symbol returns no bars, preventing a partial fetch from appearing successful.

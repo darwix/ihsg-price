@@ -4,7 +4,7 @@ from ihsg_price.storage import upsert_minutes
 
 
 def test_upsert_replaces_same_symbol_timestamp(tmp_path):
-    path = tmp_path / "minute-bars"
+    path = tmp_path / "minutes"
     bars = pd.DataFrame(
         [
             {"symbol": "BBCA.JK", "timestamp": "2026-10-21T02:00:00Z", "open": 100.0, "high": 101.0, "low": 99.0, "close": 100.5, "volume": 10},
@@ -13,14 +13,14 @@ def test_upsert_replaces_same_symbol_timestamp(tmp_path):
     )
 
     assert upsert_minutes(path, bars) == 1
-    stored = pd.read_csv(path / "2026-10-21.csv")
+    stored = pd.read_csv(path / "BBCA.JK" / "2026-10-21.csv")
     assert len(stored) == 1
     assert stored.loc[0, "close"] == 101.5
     assert stored.loc[0, "volume"] == 12
 
 
 def test_upsert_keeps_other_dates_and_old_values_when_update_is_blank(tmp_path):
-    path = tmp_path / "minute-bars"
+    path = tmp_path / "minutes"
     original = pd.DataFrame(
         [
             {"symbol": "BBCA.JK", "timestamp": "2026-10-21T02:00:00Z", "close": 100.5, "volume": 10},
@@ -34,8 +34,8 @@ def test_upsert_keeps_other_dates_and_old_values_when_update_is_blank(tmp_path):
     upsert_minutes(path, original)
     upsert_minutes(path, update)
 
-    first_day = pd.read_csv(path / "2026-10-21.csv")
-    second_day = pd.read_csv(path / "2026-10-22.csv")
+    first_day = pd.read_csv(path / "BBCA.JK" / "2026-10-21.csv")
+    second_day = pd.read_csv(path / "BBCA.JK" / "2026-10-22.csv")
     assert first_day.loc[0, "close"] == 100.5
     assert first_day.loc[0, "volume"] == 11
     assert len(second_day) == 1

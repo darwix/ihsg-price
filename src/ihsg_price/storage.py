@@ -10,8 +10,13 @@ def upsert_minutes(path: Path, bars: pd.DataFrame) -> int:
     records["timestamp"] = timestamps.astype(str)
     records["date"] = timestamps.dt.tz_convert("Asia/Jakarta").dt.strftime("%Y-%m-%d")
     total_rows = 0
-    for trading_date, daily in records.groupby("date", sort=True):
-        daily_path = path / f"{trading_date}.csv"
+    for (symbol, trading_date), daily in records.groupby(["symbol", "date"], sort=True):
+        safe_symbol = "".join(char for char in str(symbol) if char.isalnum() or char in "._-")
+        if safe_symbol in {"", ".", ".."}:
+            raise ValueError(f"Invalid symbol for output path: {symbol!r}")
+        symbol_dir = path / safe_symbol
+        symbol_dir.mkdir(parents=True, exist_ok=True)
+        daily_path = symbol_dir / f"{trading_date}.csv"
         daily = daily.drop(columns="date")
         if daily_path.exists():
             daily = pd.concat([pd.read_csv(daily_path), daily], ignore_index=True)
