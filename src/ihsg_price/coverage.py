@@ -1,5 +1,5 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
 ROOT = Path.cwd()
 START = "<!-- data-coverage:start -->"
@@ -10,11 +10,25 @@ def render_coverage(metadata_path: Path) -> str:
     if not metadata_path.exists():
         return "No collected minute data yet."
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-    if not metadata:
+    symbols = metadata.get("symbols", metadata)
+    if not symbols:
         return "No collected minute data yet."
-    rows = ["| Symbol | First scraped date | Latest scraped date | Dates scraped |", "| --- | --- | --- | ---: |"]
-    for symbol, dates in sorted(metadata.items()):
-        rows.append(f"| {symbol} | {dates[0]} | {dates[-1]} | {len(dates)} |")
+    rows = [
+        f"Last successful scrape (UTC): {metadata.get('last_successful_run', 'unknown')}",
+        "",
+        "| Symbol | Latest minute date | Minute rows (run) | Latest daily date | Daily rows (run) |",
+        "| --- | --- | ---: | --- | ---: |",
+    ]
+    for symbol, status in sorted(symbols.items()):
+        if isinstance(status, list):
+            status = {"minute_dates": status}
+        minute_dates = status.get("minute_dates", [])
+        daily_dates = status.get("daily_dates", [])
+        rows.append(
+            f"| {symbol} | {minute_dates[-1] if minute_dates else '-'} | "
+            f"{status.get('minute_rows_last_run', '-')} | "
+            f"{daily_dates[-1] if daily_dates else '-'} | {status.get('daily_rows_last_run', '-')} |"
+        )
     return "\n".join(rows)
 
 

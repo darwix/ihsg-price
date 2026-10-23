@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 
-def upsert_minutes(path: Path, bars: pd.DataFrame) -> int:
+def upsert_bars(path: Path, bars: pd.DataFrame) -> int:
     path.mkdir(parents=True, exist_ok=True)
     records = bars.copy()
     timestamps = pd.to_datetime(records["timestamp"], utc=True)
