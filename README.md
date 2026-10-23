@@ -18,10 +18,12 @@ Yahoo Finance limits 1-minute history to a short recent window. The scraper refe
 ## Data coverage
 
 <!-- data-coverage:start -->
-| Symbol | First scraped date | Latest scraped date | Dates scraped |
-| --- | --- | --- | ---: |
-| BBCA.JK | 2026-10-19 | 2026-10-23 | 5 |
-| KLBF.JK | 2026-10-19 | 2026-10-23 | 5 |
+Last successful scrape (UTC): 2026-10-23T14:07:57.224405+00:00
+
+| Symbol | Latest minute date | Minute rows (run) | Latest daily date | Daily rows (run) |
+| --- | --- | ---: | --- | ---: |
+| BBCA.JK | 2026-10-23 | 1610 | 2026-10-23 | 23 |
+| KLBF.JK | 2026-10-23 | 1555 | 2026-10-23 | 23 |
 <!-- data-coverage:end -->
 
 Dates in metadata are Jakarta dates on which Yahoo returned bars. They record days with data, not proof that every trading minute was returned. Daily bars refetch the last month to repair recent missed runs. Each symbol has its own directory, with one file per IDX trading date, for example `data/minutes/BBCA.JK/2026-10-23.csv` and `data/daily/BBCA.JK/2026-10-23.csv`; timestamps inside each CSV are UTC. The seven-day minute fetch is a recovery window, not a guarantee that Yahoo supplies every trading minute or seven full calendar days. The scraper fails if any configured symbol returns no bars at either interval, preventing a partial run from appearing successful.
