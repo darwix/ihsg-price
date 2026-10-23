@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 
@@ -18,22 +19,31 @@ def fetch_daily(symbols: list[str], period: str = "1mo") -> pd.DataFrame:
 def _fetch(symbols: list[str], interval: str, **date_range: str) -> pd.DataFrame:
     import yfinance as yf
 
-    frames = []
-    for symbol in symbols:
-        frame = yf.download(
-            symbol,
-            interval=interval,
-            progress=False,
-            auto_adjust=False,
-            multi_level_index=False,
-            **date_range,
-        )
-        if frame.empty:
-            raise RuntimeError(f"Yahoo Finance returned no {interval} bars for {symbol}")
-        frame = frame.rename_axis("timestamp").reset_index()
-        frame.columns = [str(column).lower().replace(" ", "_") for column in frame.columns]
-        frame.insert(0, "symbol", symbol)
-        frames.append(frame)
-    if not frames:
+    if not symbols:
         raise RuntimeError(f"Yahoo Finance returned no {interval} bars for configured symbols")
+
+    def fetch_one(symbol: str) -> pd.DataFrame:
+        try:
+            frame = yf.download(
+                symbol,
+                interval=interval,
+                progress=False,
+                auto_adjust=False,
+                multi_level_index=False,
+                **date_range,
+            )
+        except Exception as exc:
+            raise RuntimeError(f"Yahoo Finance {interval} fetch failed for {symbol}: {exc}") from exc
+        if frame is None or frame.empty:
+            raise RuntimeError(f"Yahoo Finance returned no {interval} bars for {symbol}")
+        try:
+            frame = frame.rename_axis("timestamp").reset_index()
+            frame.columns = [str(column).lower().replace(" ", "_") for column in frame.columns]
+            frame.insert(0, "symbol", symbol)
+            return frame
+        except Exception as exc:
+            raise RuntimeError(f"Invalid Yahoo Finance {interval} response for {symbol}: {exc}") from exc
+
+    with ThreadPoolExecutor(max_workers=min(4, len(symbols))) as pool:
+        frames = list(pool.map(fetch_one, symbols))
     return pd.concat(frames, ignore_index=True)

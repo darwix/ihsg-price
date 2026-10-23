@@ -1,6 +1,6 @@
 import pandas as pd
 
-from ihsg_price.storage import upsert_bars
+from ihsg_price.storage import upsert_bars, upsert_daily
 
 
 def test_upsert_replaces_same_symbol_timestamp(tmp_path):
@@ -47,13 +47,71 @@ def test_fetch_fails_if_any_symbol_has_no_bars(monkeypatch):
 
     from ihsg_price.scraper import fetch_minutes
 
-    calls = iter([pd.DataFrame({"Close": [100]}), pd.DataFrame()])
-    monkeypatch.setitem(sys.modules, "yfinance", SimpleNamespace(download=lambda *args, **kwargs: next(calls)))
+    results = {"BBCA.JK": pd.DataFrame({"Close": [100]}), "KLBF.JK": pd.DataFrame()}
+    monkeypatch.setitem(sys.modules, "yfinance", SimpleNamespace(download=lambda symbol, **kwargs: results[symbol]))
 
     import pytest
 
     with pytest.raises(RuntimeError, match="KLBF.JK"):
         fetch_minutes(["BBCA.JK", "KLBF.JK"])
+
+
+def test_fetch_reports_ticker_when_provider_returns_none(monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    from ihsg_price.scraper import fetch_minutes
+
+    monkeypatch.setitem(sys.modules, "yfinance", SimpleNamespace(download=lambda *args, **kwargs: None))
+
+    import pytest
+
+    with pytest.raises(RuntimeError, match="no 1m bars for BBCA.JK"):
+        fetch_minutes(["BBCA.JK"])
+
+
+def test_fetch_downloads_symbols_concurrently(monkeypatch):
+    import sys
+    from threading import Barrier
+    from types import SimpleNamespace
+
+    from ihsg_price.scraper import fetch_minutes
+
+    both_started = Barrier(2)
+    def download(symbol, **kwargs):
+        both_started.wait(timeout=2)
+        return pd.DataFrame({"Close": [100]}, index=pd.DatetimeIndex(["2026-10-21 02:00:00"], name="Datetime"))
+
+    monkeypatch.setitem(sys.modules, "yfinance", SimpleNamespace(download=download))
+
+    result = fetch_minutes(["BBCA.JK", "KLBF.JK"])
+
+    assert result["symbol"].tolist() == ["BBCA.JK", "KLBF.JK"]
+
+
+def test_fetch_adds_symbol_context_to_provider_errors(monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    from ihsg_price.scraper import fetch_minutes
+
+    def download(symbol, **kwargs):
+        raise OSError("connection timed out")
+
+    monkeypatch.setitem(sys.modules, "yfinance", SimpleNamespace(download=download))
+
+    import pytest
+
+    with pytest.raises(RuntimeError, match="1m fetch failed for BBCA.JK") as error:
+        fetch_minutes(["BBCA.JK"])
+    assert isinstance(error.value.__cause__, OSError)
+
+
+def test_upsert_reports_invalid_csv_schema_with_path(tmp_path):
+    import pytest
+
+    with pytest.raises(ValueError, match="Invalid bars for.*prices.csv.*missing required columns"):
+        upsert_daily(tmp_path / "prices.csv", pd.DataFrame({"close": [100]}))
 
 
 def test_daily_fetch_requests_daily_bars(monkeypatch):
@@ -74,3 +132,19 @@ def test_daily_fetch_requests_daily_bars(monkeypatch):
     assert len(result) == 1
     assert calls[0][1]["interval"] == "1d"
     assert calls[0][1]["period"] == "1mo"
+
+
+def test_daily_upsert_keeps_all_dates_in_one_symbol_file(tmp_path):
+    path = tmp_path / "daily"
+    first = pd.DataFrame([
+        {"symbol": "BBCA.JK", "timestamp": "2026-10-20T02:00:00Z", "close": 100.0},
+        {"symbol": "BBCA.JK", "timestamp": "2026-10-21T02:00:00Z", "close": 101.0},
+    ])
+    update = pd.DataFrame([{"symbol": "BBCA.JK", "timestamp": "2026-10-21T02:00:00Z", "close": 102.0}])
+
+    upsert_daily(path, first)
+    upsert_daily(path, update)
+
+    stored = pd.read_csv(path / "BBCA.JK.csv")
+    assert len(stored) == 2
+    assert stored.loc[stored["timestamp"].str.contains("2026-10-21"), "close"].item() == 102.0

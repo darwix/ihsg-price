@@ -41,6 +41,17 @@ def test_record_scrape_status_keeps_tickers_not_fetched_this_run(tmp_path):
     assert result["symbols"]["KLBF.JK"]["minute_dates"] == ["2026-10-20"]
 
 
+def test_record_scrape_status_reports_corrupt_metadata_path(tmp_path):
+    metadata_path = tmp_path / "metadata.json"
+    metadata_path.write_text("not-json")
+    bars = pd.DataFrame([{"symbol": "BBCA.JK", "timestamp": "2026-10-21T02:00:00Z"}])
+
+    import pytest
+    with pytest.raises(RuntimeError, match="Could not read scrape metadata.*metadata.json") as error:
+        record_scrape_status(metadata_path, bars, bars)
+    assert isinstance(error.value.__cause__, json.JSONDecodeError)
+
+
 def test_render_coverage_uses_metadata(tmp_path):
     metadata = tmp_path / "metadata.json"
     metadata.write_text(json.dumps({
