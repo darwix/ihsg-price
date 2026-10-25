@@ -18,11 +18,12 @@ Yahoo Finance limits 1-minute history to a short recent window. The scraper refe
 ## Data coverage
 
 <!-- data-coverage:start -->
-Last successful scrape (UTC): 2026-10-25T11:23:40.037048+00:00
+Last successful scrape (UTC): 2026-10-25T14:19:14.041014+00:00
 
 | Symbol | Latest minute date | Minute rows (run) | Latest daily date | Daily rows (run) |
 | --- | --- | ---: | --- | ---: |
 | BBCA.JK | 2026-10-23 | 1610 | 2026-10-23 | 23 |
+| BMRI.JK | 2026-10-23 | 1611 | 2026-10-23 | 23 |
 | BUMI.JK | 2026-10-23 | 1611 | 2026-10-23 | 23 |
 | KLBF.JK | 2026-10-23 | 1555 | 2026-10-23 | 23 |
 <!-- data-coverage:end -->
