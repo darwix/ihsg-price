@@ -18,7 +18,7 @@ Yahoo Finance limits 1-minute history to a short recent window. The scraper refe
 ## Data coverage
 
 <!-- data-coverage:start -->
-Last successful scrape (UTC): 2026-10-26T13:40:33.513933+00:00
+Last successful scrape (UTC): 2026-10-26T16:55:22.145302+00:00
 
 | Symbol | Latest minute date | Minute rows (run) | Latest daily date | Daily rows (run) |
 | --- | --- | ---: | --- | ---: |
