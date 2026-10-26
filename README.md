@@ -18,14 +18,17 @@ Yahoo Finance limits 1-minute history to a short recent window. The scraper refe
 ## Data coverage
 
 <!-- data-coverage:start -->
-Last successful scrape (UTC): 2026-10-25T14:19:14.041014+00:00
+Last successful scrape (UTC): 2026-10-26T10:41:40.715425+00:00
 
 | Symbol | Latest minute date | Minute rows (run) | Latest daily date | Daily rows (run) |
 | --- | --- | ---: | --- | ---: |
-| BBCA.JK | 2026-10-23 | 1610 | 2026-10-23 | 23 |
-| BMRI.JK | 2026-10-23 | 1611 | 2026-10-23 | 23 |
-| BUMI.JK | 2026-10-23 | 1611 | 2026-10-23 | 23 |
-| KLBF.JK | 2026-10-23 | 1555 | 2026-10-23 | 23 |
+| ANDI.JK | 2026-10-26 | 1124 | 2026-10-26 | 21 |
+| BBCA.JK | 2026-10-26 | 1610 | 2026-10-26 | 21 |
+| BMRI.JK | 2026-10-26 | 1610 | 2026-10-26 | 21 |
+| BUMI.JK | 2026-10-26 | 1611 | 2026-10-26 | 21 |
+| BUVA.JK | 2026-10-26 | 1601 | 2026-10-26 | 21 |
+| KLBF.JK | 2026-10-26 | 1536 | 2026-10-26 | 21 |
+| SEMA.JK | 2026-10-26 | 1516 | 2026-10-26 | 21 |
 <!-- data-coverage:end -->
 
 Dates in metadata are Jakarta dates on which Yahoo returned bars. They record days with data, not proof that every trading minute was returned. Daily bars refetch the last month to repair recent missed runs. Minute files use one file per IDX trading date, for example `data/minutes/BBCA.JK/2026-10-23.csv`; daily files keep all dates in `data/daily/BBCA.JK.csv`. Timestamps inside each CSV are UTC. The seven-day minute fetch is a recovery window, not a guarantee that Yahoo supplies every trading minute or seven full calendar days. The scraper fails if any configured symbol returns no bars at either interval, preventing a partial run from appearing successful.
